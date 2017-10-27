@@ -3,3 +3,4 @@ ABLMCCAPI.iml
 /pom.xml.releaseBackup
 /release.properties
 /target/
+*.DS_Store

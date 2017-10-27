@@ -1,9 +1,12 @@
 package com.arcaneless.ablmccapi;
 
 import com.arcaneless.ablmccapi.types.Assignment;
+import com.arcaneless.ablmccapi.types.ContactInfo;
 import com.arcaneless.ablmccapi.types.GeneralInfo;
 import com.arcaneless.ablmccapi.types.Notice;
-import org.asynchttpclient.*;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.asynchttpclient.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -117,6 +120,29 @@ public class ABLMCCAPI {
                                 callback.onCompleted(Finder.findAssignment(doc1));
                                 return response1;
                             });
+                    return response;
+                });
+    }
+
+    public CompletableFuture<Response> getContactInfo(Callback<ContactInfo> callback) {
+        return client.prepareGet("http://web.ablmcc.edu.hk/CustomPage/26/content.html")
+                .execute()
+                .toCompletableFuture()
+                .exceptionally(e -> {
+                    System.err.println(e.getMessage());
+                    return null;
+                })
+                .thenApplyAsync(response -> {
+                    try {
+                        Document doc = Jsoup.parse(new String(response.getResponseBodyAsBytes(), "Big5"));
+                        doc.outputSettings().charset("Big5");
+                        callback.onCompleted(Finder.findContactinfo(doc));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+
+                    //System.out.println(doc.toString());
                     return response;
                 });
     }

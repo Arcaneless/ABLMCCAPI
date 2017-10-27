@@ -1,13 +1,14 @@
 package com.arcaneless.ablmccapi;
 
-import com.arcaneless.ablmccapi.types.Assignment;
-import com.arcaneless.ablmccapi.types.GeneralInfo;
-import com.arcaneless.ablmccapi.types.Info;
-import com.arcaneless.ablmccapi.types.Notice;
+import com.arcaneless.ablmccapi.types.*;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.IOException;
+
+// NO DOC
 public class Finder {
 
     protected static GeneralInfo findInfo(Document doc) {
@@ -75,6 +76,46 @@ public class Finder {
             ass.setList(Assignment.Day.NEXTNEXTDAY, buildAssignment(e.get(1)).setTitle(doc.getElementsByClass("dueTableHeading").get(1).text()));
         else ass.setList(Assignment.Day.NEXTNEXTDAY, new Assignment.CompoundBasic());
         return ass;
+    }
+
+    // HTML Each Category request
+    private static ContactInfo.ContactCategory buildCategory(String category, String link)
+            throws IOException {
+        // Structure build
+        ContactInfo.ContactCategory cc = new ContactInfo.ContactCategory(category);
+
+        Document doc = Jsoup.connect(link).get();
+        // document processing
+        // Find all column
+        Elements list = doc.getElementsByTag("tr");
+        // Remove the annoying top bar
+        if (list.size() == 0) return cc;
+        list.remove(0);
+
+        // Start iterating column
+        list.forEach(e -> {
+            if (e.getElementsByTag("b").size() == 0) return;
+            String name = e.getElementsByTag("b").get(0).text();
+            String email = e.getElementsByAttributeValueContaining("href", "mailto").text().replace("mailto:", "");
+
+            // Adding to list
+            cc.add(new ContactInfo.Contact(name, email));
+        });
+        return cc;
+    }
+
+    protected static ContactInfo findContactinfo(Document doc) {
+        ContactInfo contact = new ContactInfo();
+        Elements e = doc.getElementsByAttributeValueContaining("href", "http://web.ablmcc.edu.hk/CustomPage/26/subjects/");
+        try {
+            for (Element element : e) {
+                // new String(element.text().getBytes("Big5"), "UTF-8")
+                contact.addCategory(buildCategory(element.text(), element.attr("href")));
+            }
+        } catch (Exception d) {
+            d.printStackTrace();
+        }
+        return contact;
     }
 
 }
